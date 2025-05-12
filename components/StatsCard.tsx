@@ -39,7 +39,7 @@ const StatsCard = ({
 							</figcaption>
 						</figure>
 						<p className='text-sm font-medium text-gray-100 truncate'>
-							vs last month
+							&#8203; vs last month
 						</p>
 					</div>
 				</div>
