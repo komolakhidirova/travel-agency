@@ -5,10 +5,10 @@ import type { Route } from './+types/dashboard'
 
 export const clientLoader = async () => await getUser()
 
-const Dashboard = ({ loaderData }: Route.ComponentProps) => {
-	const { totalUsers, usersJoined, totalTrips, tripsCreated, userRole } =
-		dashboardStats
+const { totalUsers, usersJoined, totalTrips, tripsCreated, userRole } =
+	dashboardStats
 
+const Dashboard = ({ loaderData }: Route.ComponentProps) => {
 	const user = loaderData as User | null
 
 	return (
