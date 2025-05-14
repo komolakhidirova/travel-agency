@@ -1,44 +1,44 @@
-import { ButtonComponent } from '@syncfusion/ej2-react-buttons'
 import { ComboBoxComponent } from '@syncfusion/ej2-react-dropdowns'
+import { comboBoxItems, selectItems } from '~/constants'
+import { Header } from '../../../components'
+import type { Route } from './+types/create-trip'
+
+import { ButtonComponent } from '@syncfusion/ej2-react-buttons'
 import {
 	LayerDirective,
 	LayersDirective,
 	MapsComponent,
 } from '@syncfusion/ej2-react-maps'
-import { Header } from 'components'
 import { cn, formatKey } from 'lib/utils'
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { account } from '~/appwrite/client'
-import { comboBoxItems, selectItems } from '~/constants'
 import { world_map } from '~/constants/world_map'
-import type { Route } from './+types/create-trip'
 
 export const loader = async () => {
 	const response = await fetch('https://restcountries.com/v3.1/all')
 	const data = await response.json()
 
 	return data.map((country: any) => ({
-		// country.flag +
-		name: country.name.common,
-		coordinates: country.latIng,
+		name: country.flag + country.name.common,
+		coordinates: country.latlng,
 		value: country.name.common,
 		openStreetMap: country.maps?.openStreetMap,
 	}))
 }
 
 const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
-	//@ts-ignore
 	const countries = loaderData as Country[]
+	const navigate = useNavigate()
 
 	const [formData, setFormData] = useState<TripFormData>({
-		country: '',
+		country: countries[0]?.name || '',
 		travelStyle: '',
 		interest: '',
 		budget: '',
 		duration: 0,
 		groupType: '',
 	})
-
 	const [error, setError] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 
@@ -71,8 +71,24 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 		}
 
 		try {
-			console.log('user', user)
-			console.log('formData', formData)
+			const response = await fetch('/api/create-trip', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					country: formData.country,
+					numberOfDays: formData.duration,
+					travelStyle: formData.travelStyle,
+					interests: formData.interest,
+					budget: formData.budget,
+					groupType: formData.groupType,
+					userId: user.$id,
+				}),
+			})
+
+			const result: CreateTripResponse = await response.json()
+
+			if (result?.id) navigate(`/trips/${result.id}`)
+			else console.error('Failed to generate a trip')
 		} catch (e) {
 			console.error('Error generating trip', e)
 		} finally {
@@ -83,7 +99,6 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 	const handleChange = (key: keyof TripFormData, value: string | number) => {
 		setFormData({ ...formData, [key]: value })
 	}
-
 	const countryData = countries.map(country => ({
 		text: country.name,
 		value: country.value,
@@ -98,11 +113,12 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 					?.coordinates || [],
 		},
 	]
+
 	return (
 		<main className='flex flex-col gap-10 pb-20 wrapper'>
 			<Header
 				title='Add a New Trip'
-				description='View and edit AI-generated travel plans'
+				description='View and edit AI Generated travel plans'
 			/>
 
 			<section className='mt-2.5 wrapper-md'>
@@ -123,6 +139,7 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 							allowFiltering
 							filtering={e => {
 								const query = e.text.toLowerCase()
+
 								e.updateData(
 									countries
 										.filter(country =>
@@ -141,9 +158,9 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 						<label htmlFor='duration'>Duration</label>
 						<input
 							id='duration'
-							type='number'
 							name='duration'
-							placeholder='Enter a number of days (5, 7, ...)'
+							type='number'
+							placeholder='Enter a number of days'
 							className='form-input placeholder:text-gray-100'
 							onChange={e => handleChange('duration', Number(e.target.value))}
 						/>
@@ -169,6 +186,7 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 								allowFiltering
 								filtering={e => {
 									const query = e.text.toLowerCase()
+
 									e.updateData(
 										comboBoxItems[key]
 											.filter(item => item.toLowerCase().includes(query))
@@ -185,7 +203,6 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 
 					<div>
 						<label htmlFor='location'>Location on the world map</label>
-
 						<MapsComponent>
 							<LayersDirective>
 								<LayerDirective
@@ -193,7 +210,7 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 									dataSource={mapData}
 									shapePropertyPath='name'
 									shapeDataPath='country'
-									shapeSettings={{ colorValuePath: 'color', fill: '#e5e5e5' }}
+									shapeSettings={{ colorValuePath: 'color', fill: '#E5E5E5' }}
 								/>
 							</LayersDirective>
 						</MapsComponent>
@@ -228,5 +245,4 @@ const CreateTrip = ({ loaderData }: Route.ComponentProps) => {
 		</main>
 	)
 }
-
 export default CreateTrip
