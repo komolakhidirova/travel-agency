@@ -20,7 +20,7 @@ export const loader = async () => {
 	const data = await response.json()
 
 	return data.map((country: any) => ({
-		name: country.flag + country.name.common,
+		name: country.name.common,
 		coordinates: country.latlng,
 		value: country.name.common,
 		openStreetMap: country.maps?.openStreetMap,

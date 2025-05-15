@@ -35,7 +35,9 @@ const TripCard = ({
 						alt='location'
 						className='size-4'
 					/>
-					<figcaption>{location}</figcaption>
+					<figcaption className='whitespace-nowrap overflow-hidden text-ellipsis'>
+						{location}
+					</figcaption>
 				</figure>
 			</article>
 
