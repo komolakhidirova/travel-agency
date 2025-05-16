@@ -29,7 +29,7 @@ const RootNavbar = () => {
 			)}
 		>
 			<header className='root-nav wrapper'>
-				<Link to='/' className='link-logo'>
+				<Link to='/dashboard' className='link-logo'>
 					<img
 						src='/assets/icons/logo.svg'
 						alt='logo'
