@@ -1,157 +1,95 @@
-import { parseTripData } from 'lib/utils'
-import { appwriteConfig, database } from '~/appwrite/client'
+import {
+	ColumnDirective,
+	ColumnsDirective,
+	GridComponent,
+} from '@syncfusion/ej2-react-grids'
+import { cn, formatDate } from 'lib/utils'
+import { getAllUsers } from '~/appwrite/auth'
+import { Header } from '../../../components'
+import type { Route } from './+types/all-users'
 
-interface Document {
-	[key: string]: any
+export const loader = async () => {
+	const { users, total } = await getAllUsers(10, 0)
+
+	return { users, total }
 }
 
-type FilterByDate = (
-	items: Document[],
-	key: string,
-	start: string,
-	end?: string
-) => number
+const AllUsers = ({ loaderData }: Route.ComponentProps) => {
+	const { users } = loaderData
 
-export const getUsersAndTripsStats = async (): Promise<DashboardStats> => {
-	const d = new Date()
-	const startCurrent = new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
-	const startPrev = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString()
-	const endPrev = new Date(d.getFullYear(), d.getMonth(), 0).toISOString()
+	return (
+		<main className='all-users wrapper'>
+			<Header
+				title='Manage Users'
+				description='Filter, sort, and access detailed user profiles'
+			/>
 
-	const [users, trips] = await Promise.all([
-		database.listDocuments(
-			appwriteConfig.databaseId,
-			appwriteConfig.userCollectionId
-		),
-		database.listDocuments(
-			appwriteConfig.databaseId,
-			appwriteConfig.tripCollectionId
-		),
-	])
-
-	const filterByDate: FilterByDate = (items, key, start, end) =>
-		items.filter(item => item[key] >= start && (!end || item[key] <= end))
-			.length
-
-	const filterUsersByRole = (role: string) => {
-		return users.documents.filter((u: Document) => u.status === role)
-	}
-
-	return {
-		totalUsers: users.total,
-		usersJoined: {
-			currentMonth: filterByDate(
-				users.documents,
-				'joinedAt',
-				startCurrent,
-				undefined
-			),
-			lastMonth: filterByDate(users.documents, 'joinedAt', startPrev, endPrev),
-		},
-		userRole: {
-			total: filterUsersByRole('user').length,
-			currentMonth: filterByDate(
-				filterUsersByRole('user'),
-				'joinedAt',
-				startCurrent,
-				undefined
-			),
-			lastMonth: filterByDate(
-				filterUsersByRole('user'),
-				'joinedAt',
-				startPrev,
-				endPrev
-			),
-		},
-		totalTrips: trips.total,
-		tripsCreated: {
-			currentMonth: filterByDate(
-				trips.documents,
-				'createdAt',
-				startCurrent,
-				undefined
-			),
-			lastMonth: filterByDate(
-				filterUsersByRole('user'),
-				'joinedAt',
-				startPrev,
-				endPrev
-			),
-		},
-	}
+			<GridComponent dataSource={users} gridLines='None'>
+				<ColumnsDirective>
+					<ColumnDirective
+						field='name'
+						headerText='Name'
+						width='200'
+						textAlign='Left'
+						template={(props: UserData) => (
+							<div className='flex items-center gap-1.5 px-4'>
+								<img
+									src={props.imageUrl}
+									alt='user'
+									className='rounded-full size-8 aspect-square'
+									referrerPolicy='no-referrer'
+								/>
+								<span>{props.name}</span>
+							</div>
+						)}
+					/>
+					<ColumnDirective
+						field='email'
+						headerText='Email Address'
+						width='200'
+						textAlign='Left'
+					/>
+					<ColumnDirective
+						field='joinedAt'
+						headerText='Date Joined'
+						width='140'
+						textAlign='Left'
+						template={({ joinedAt }: { joinedAt: string }) =>
+							formatDate(joinedAt)
+						}
+					/>
+					<ColumnDirective
+						field='status'
+						headerText='Type'
+						width='100'
+						textAlign='Left'
+						template={({ status }: UserData) => (
+							<article
+								className={cn(
+									'status-column',
+									status === 'user' ? 'bg-success-50' : 'bg-light-300'
+								)}
+							>
+								<div
+									className={cn(
+										'size-1.5 rounded-full',
+										status === 'user' ? 'bg-success-500' : 'bg-gray-500'
+									)}
+								/>
+								<h3
+									className={cn(
+										'font-inter text-xs font-medium',
+										status === 'user' ? 'text-success-700' : 'text-gray-500'
+									)}
+								>
+									{status}
+								</h3>
+							</article>
+						)}
+					/>
+				</ColumnsDirective>
+			</GridComponent>
+		</main>
+	)
 }
-
-export const getUserGrowthPerDay = async () => {
-	const users = await database.listDocuments(
-		appwriteConfig.databaseId,
-		appwriteConfig.userCollectionId
-	)
-
-	const userGrowth = users.documents.reduce(
-		(acc: { [key: string]: number }, user: Document) => {
-			const date = new Date(user.joinedAt)
-			const day = date.toLocaleDateString('en-US', {
-				month: 'short',
-				day: 'numeric',
-			})
-			acc[day] = (acc[day] || 0) + 1
-			return acc
-		},
-		{}
-	)
-
-	return Object.entries(userGrowth).map(([day, count]) => ({
-		count: Number(count),
-		day,
-	}))
-}
-
-export const getTripsCreatedPerDay = async () => {
-	const trips = await database.listDocuments(
-		appwriteConfig.databaseId,
-		appwriteConfig.tripCollectionId
-	)
-
-	const tripsGrowth = trips.documents.reduce(
-		(acc: { [key: string]: number }, trip: Document) => {
-			const date = new Date(trip.createdAt)
-			const day = date.toLocaleDateString('en-US', {
-				month: 'short',
-				day: 'numeric',
-			})
-			acc[day] = (acc[day] || 0) + 1
-			return acc
-		},
-		{}
-	)
-
-	return Object.entries(tripsGrowth).map(([day, count]) => ({
-		count: Number(count),
-		day,
-	}))
-}
-
-export const getTripsByTravelStyle = async () => {
-	const trips = await database.listDocuments(
-		appwriteConfig.databaseId,
-		appwriteConfig.tripCollectionId
-	)
-
-	const travelStyleCounts = trips.documents.reduce(
-		(acc: { [key: string]: number }, trip: Document) => {
-			const tripDetail = parseTripData(trip.tripDetails)
-
-			if (tripDetail && tripDetail.travelStyle) {
-				const travelStyle = tripDetail.travelStyle
-				acc[travelStyle] = (acc[travelStyle] || 0) + 1
-			}
-			return acc
-		},
-		{}
-	)
-
-	return Object.entries(travelStyleCounts).map(([travelStyle, count]) => ({
-		count: Number(count),
-		travelStyle,
-	}))
-}
+export default AllUsers
