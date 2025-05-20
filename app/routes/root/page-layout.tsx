@@ -1,4 +1,5 @@
 import RootNavbar from 'components/RootNavbar'
+import { useEffect } from 'react'
 import { redirect } from 'react-router'
 import { getExistingUser, storeUserData } from '~/appwrite/auth'
 import { account } from '~/appwrite/client'
@@ -18,6 +19,20 @@ export async function clientLoader() {
 }
 
 const PageLayout = () => {
+	useEffect(() => {
+		document.title = 'Tourvisto'
+
+		let link: HTMLLinkElement | null =
+			document.querySelector("link[rel~='icon']")
+		if (link) {
+			link.href = '/assets/icons/favicon.ico'
+		} else {
+			const newLink = document.createElement('link')
+			newLink.rel = 'icon'
+			newLink.href = '/assets/icons/favicon.ico'
+			document.head.appendChild(newLink)
+		}
+	}, [])
 	return (
 		<div className='bg-light-200'>
 			<RootNavbar />
