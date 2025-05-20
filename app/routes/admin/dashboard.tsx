@@ -16,6 +16,7 @@ import {
 } from '@syncfusion/ej2-react-grids'
 import { Header, StatsCard, TripCard } from 'components'
 import { parseTripData } from 'lib/utils'
+import { Link } from 'react-router'
 import { getAllUsers, getUser } from '~/appwrite/auth'
 import {
 	getTripsByTravelStyle,
@@ -82,12 +83,14 @@ const Dashboard = ({ loaderData }: Route.ComponentProps) => {
 			dataSource: allUsers,
 			field: 'count',
 			headerText: 'Trips created',
+			link: '/all-users',
 		},
 		{
 			title: 'Trips based on interests',
 			dataSource: trips,
 			field: 'interest',
 			headerText: 'Interests',
+			link: '/trips',
 		},
 	]
 
@@ -212,40 +215,44 @@ const Dashboard = ({ loaderData }: Route.ComponentProps) => {
 			</section>
 
 			<section className='user-trip wrapper'>
-				{usersAndTrips.map(({ title, dataSource, field, headerText }, i) => (
-					<div key={i} className='flex flex-col gap-5'>
-						<h3 className='p-20-semibold text-dark-100'>{title}</h3>
+				{usersAndTrips.map(
+					({ title, dataSource, field, headerText, link }, i) => (
+						<div key={i} className='flex flex-col gap-5'>
+							<Link to={link}>
+								<h3 className='p-20-semibold text-dark-100'>{title}</h3>
+							</Link>
 
-						<GridComponent dataSource={dataSource} gridLines='None'>
-							<ColumnsDirective>
-								<ColumnDirective
-									field='name'
-									headerText='Name'
-									width='200'
-									textAlign='Left'
-									template={(props: UserData) => (
-										<div className='flex items-center gap-1.5 px-4'>
-											<img
-												src={props.imageUrl}
-												alt='user'
-												className='rounded-full size-8 aspect-square'
-												referrerPolicy='no-referrer'
-											/>
-											<span>{props.name}</span>
-										</div>
-									)}
-								/>
+							<GridComponent dataSource={dataSource} gridLines='None'>
+								<ColumnsDirective>
+									<ColumnDirective
+										field='name'
+										headerText='Name'
+										width='200'
+										textAlign='Left'
+										template={(props: UserData) => (
+											<div className='flex items-center gap-1.5 px-4'>
+												<img
+													src={props.imageUrl}
+													alt='user'
+													className='rounded-full size-8 aspect-square'
+													referrerPolicy='no-referrer'
+												/>
+												<span>{props.name}</span>
+											</div>
+										)}
+									/>
 
-								<ColumnDirective
-									field={field}
-									headerText={headerText}
-									width='150'
-									textAlign='Left'
-								/>
-							</ColumnsDirective>
-						</GridComponent>
-					</div>
-				))}
+									<ColumnDirective
+										field={field}
+										headerText={headerText}
+										width='150'
+										textAlign='Left'
+									/>
+								</ColumnsDirective>
+							</GridComponent>
+						</div>
+					)
+				)}
 			</section>
 		</main>
 	)
