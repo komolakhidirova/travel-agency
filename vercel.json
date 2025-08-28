@@ -1,10 +1,9 @@
 {
-	"rewrites": [
+	"redirects": [
 		{
 			"source": "/",
 			"destination": "/dashboard",
-			"permanent": false
+			"permanent": true
 		}
-	],
-	"cleanUrls": true
+	]
 }
